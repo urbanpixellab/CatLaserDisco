@@ -7,7 +7,7 @@ connect to 192.168.4.1 and toogle the pitch +- 250 rotations
 
 ## Hardware
 2x 28byj-5 stepper + ULN 2003
-1x Laser Diode
+1x Laser Diode https://www.kiwi-electronics.nl/laser-diode-5mw-650nm-red?search=laser&description=true
 1x LilyGO TTGO T-Koala ESP32-WROVER https://www.tinytronics.nl/shop/en/development-boards/microcontroller-boards/with-wi-fi/lilygo-ttgo-t-koala-esp32-wrover 
 3d Printed Gimbal https://www.thingiverse.com/thing:794786
 

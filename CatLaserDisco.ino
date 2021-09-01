@@ -6,8 +6,8 @@
 // Define number of steps per rotation:
 const int stepsPerRevolution = 2048;
 Stepper hStepper = Stepper(stepsPerRevolution, 5, 23, 18, 19);//heading
-//Stepper pStepper = Stepper(stepsPerRevolution, 8, 10, 9, 11);//pitch
-
+Stepper pStepper = Stepper(stepsPerRevolution, 13,14,12,27);//pitch
+const int laserPin = 21;
 
 // Replace with your network credentials
 const char* ssid     = "ESP32-Access-Point";
@@ -22,19 +22,15 @@ String header;
 // Auxiliar variables to store the current output state
 String output26State = "off";
 String output27State = "off";
+String output28State = "off";
 
-// Assign output variables to GPIO pins
-const int output26 = 26;
-const int output27 = 27;
 
 void setup() {
   Serial.begin(115200);
   // Initialize the output variables as outputs
-  pinMode(output26, OUTPUT);
-  pinMode(output27, OUTPUT);
+  pinMode(laserPin, OUTPUT);
   // Set outputs to LOW
-  digitalWrite(output26, LOW);
-  digitalWrite(output27, LOW);
+  digitalWrite(laserPin, LOW);
 
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Setting AP (Access Point)…");
@@ -47,6 +43,7 @@ void setup() {
   
   server.begin();
   hStepper.setSpeed(10);
+  pStepper.setSpeed(10);
 }
 
 void loop(){
@@ -73,27 +70,25 @@ void loop(){
             
             // turns the GPIOs on and off
             if (header.indexOf("GET /26/on") >= 0) {
-              Serial.println("GPIO 26 on");
               output26State = "on";
-              digitalWrite(output26, HIGH);
               hStepper.step(250);
             } else if (header.indexOf("GET /26/off") >= 0) {
-              Serial.println("GPIO 26 off");
               output26State = "off";
-              digitalWrite(output26, LOW);
               hStepper.step(-250);
             } else if (header.indexOf("GET /27/on") >= 0) {
-              Serial.println("GPIO 27 on");
               output27State = "on";
-              digitalWrite(output27, HIGH);
-              hStepper.step(250);
+              pStepper.step(250);
             } else if (header.indexOf("GET /27/off") >= 0) {
-              Serial.println("GPIO 27 off");
               output27State = "off";
-              digitalWrite(output27, LOW);
-              hStepper.step(-250);
+              pStepper.step(-250);
+            } else if (header.indexOf("GET /28/on") >= 0) {
+              output28State = "on";
+              digitalWrite(laserPin, HIGH);
+            } else if (header.indexOf("GET /28/off") >= 0) {
+              output28State = "off";
+              digitalWrite(laserPin, LOW);
             }
-            
+
             // Display the HTML web page
             client.println("<!DOCTYPE html><html>");
             client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
@@ -125,6 +120,16 @@ void loop(){
             } else {
               client.println("<p><a href=\"/27/off\"><button class=\"button button2\">OFF</button></a></p>");
             }
+
+            // Display current state, and ON/OFF buttons for Laser  
+            client.println("<p>GPIO 27 - State " + output28State + "</p>");
+            // If the output27State is off, it displays the ON button       
+            if (output28State=="off") {
+              client.println("<p><a href=\"/28/on\"><button class=\"button\">ON</button></a></p>");
+            } else {
+              client.println("<p><a href=\"/28/off\"><button class=\"button button2\">OFF</button></a></p>");
+            }
+
             client.println("</body></html>");
             
             // The HTTP response ends with another blank line
