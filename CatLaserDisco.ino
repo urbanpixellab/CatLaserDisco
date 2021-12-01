@@ -5,13 +5,13 @@
 
 // Define number of steps per rotation:
 const int stepsPerRevolution = 2048;
-Stepper hStepper = Stepper(stepsPerRevolution, 5, 23, 18, 19);//heading
-Stepper pStepper = Stepper(stepsPerRevolution, 13, 14, 12, 27); //pitch
+Stepper pStepper = Stepper(stepsPerRevolution, 5, 23, 18, 19);//heading
+Stepper hStepper = Stepper(stepsPerRevolution, 13, 14, 12, 27); //pitch
 const int laserPin = 21;
 
 // Replace with your network credentials
-const char* ssid     = "ESP32-Access-Point";
-const char* password = "123456789";
+const char* ssid     = "ESP32-Access-Point";//"FRITZ!Box Fon WLAN 7360";//
+const char* password = "123456789";//"59267746303957006813";//"123456789";
 
 // Set web server port number to 80
 WiFiServer server(80);
@@ -29,8 +29,7 @@ void setup() {
   Serial.begin(115200);
   // Initialize the output variables as outputs
   pinMode(laserPin, OUTPUT);
-  // Set outputs to LOW
-  digitalWrite(laserPin, LOW);
+  toggleLaser(false);
 
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Setting AP (Access Point)…");
@@ -69,24 +68,20 @@ void loop() {
             client.println();
 
             // turns the GPIOs on and off
-            if (header.indexOf("GET /26/on") >= 0) {
-              output26State = "on";
-              hStepper.step(250);
-            } else if (header.indexOf("GET /26/off") >= 0) {
-              output26State = "off";
-              hStepper.step(-250);
-            } else if (header.indexOf("GET /27/on") >= 0) {
-              output27State = "on";
-              pStepper.step(250);
-            } else if (header.indexOf("GET /27/off") >= 0) {
-              output27State = "off";
-              pStepper.step(-250);
-            } else if (header.indexOf("GET /28/on") >= 0) {
+            if (header.indexOf("GET /28/on") >= 0) {
               output28State = "on";
-              digitalWrite(laserPin, HIGH);
+              toggleLaser(true);
             } else if (header.indexOf("GET /28/off") >= 0) {
               output28State = "off";
-              digitalWrite(laserPin, LOW);
+              toggleLaser(false);
+            } else if (header.indexOf("GET /Up") >= 0) {
+              pitch(100);
+            } else if (header.indexOf("GET /Down") >= 0) {
+              pitch(-100);
+            } else if (header.indexOf("GET /Left") >= 0) {
+              heading(-100);
+            } else if (header.indexOf("GET /Right") >= 0) {
+              heading(100);
             }
 
             // Display the HTML web page
@@ -98,31 +93,20 @@ void loop() {
             client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
             client.println(".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
             client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
-            client.println(".button2 {background-color: #555555;}</style></head>");
+            client.println(".button2 {background-color: #FF0000;}</style></head>");
 
             // Web Page Heading
-            client.println("<body><h1>ESP32 Web Server</h1>");
+            client.println("<body><h1>LaserCatDisco</h1>");
+            
+            client.println("<p><a href=\"/Down\"><button class=\"button\">Down</button></a></p>");
+            client.println("<p><a href=\"/Up\"><button class=\"button\">Up</button></a></p>");
 
-            // Display current state, and ON/OFF buttons for GPIO 26
-            client.println("<p>GPIO 26 - State " + output26State + "</p>");
-            // If the output26State is off, it displays the ON button
-            if (output26State == "off") {
-              client.println("<p><a href=\"/26/on\"><button class=\"button\">ON</button></a></p>");
-            } else {
-              client.println("<p><a href=\"/26/off\"><button class=\"button button2\">OFF</button></a></p>");
-            }
-
-            // Display current state, and ON/OFF buttons for GPIO 27
-            client.println("<p>GPIO 27 - State " + output27State + "</p>");
-            // If the output27State is off, it displays the ON button
-            if (output27State == "off") {
-              client.println("<p><a href=\"/27/on\"><button class=\"button\">ON</button></a></p>");
-            } else {
-              client.println("<p><a href=\"/27/off\"><button class=\"button button2\">OFF</button></a></p>");
-            }
+            client.println("<p><a href=\"/Left\"><button class=\"button\">Left</button></a></p>");
+            client.println("<p><a href=\"/Right\"><button class=\"button\">Right</button></a></p>");
+            
 
             // Display current state, and ON/OFF buttons for Laser
-            client.println("<p>GPIO 27 - State " + output28State + "</p>");
+            client.println("<p>Laser - State " + output28State + "</p>");
             // If the output27State is off, it displays the ON button
             if (output28State == "off") {
               client.println("<p><a href=\"/28/on\"><button class=\"button\">ON</button></a></p>");
@@ -151,4 +135,11 @@ void loop() {
     Serial.println("Client disconnected.");
     Serial.println("");
   }
+}
+
+void toggleLaser(bool state){
+  if (state)
+    digitalWrite(laserPin, HIGH);
+  else
+    digitalWrite(laserPin, LOW);
 }
